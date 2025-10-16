@@ -1,0 +1,157 @@
+`timescale 1ns/1ns
+
+module ALU_TOP_TB;
+
+parameter width = 16;
+parameter width2 = 32;
+
+reg [width-1:0] A_TB;
+reg [width-1:0] B_TB;
+reg [3:0] ALU_FUN_TB;
+reg clk_TB;
+reg reset_TB;
+
+wire [width2-1:0] arith_out;
+wire arith_flag;
+wire [width-1:0] logic_out;
+wire logic_flag;
+wire [width-1:0] cmp_out;
+wire cmp_flag;
+wire [width-1:0] shift_out;
+wire shift_flag;
+
+// Instantiate DUT
+ALU_TOP #(.width(width), .width2(width2)) DUT (
+    .A(A_TB),
+    .B(B_TB),
+    .clk(clk_TB),
+    .reset(reset_TB),
+    .ALU_FUN(ALU_FUN_TB),
+    .arith_out(arith_out),
+    .arith_flag(arith_flag),
+    .logic_out(logic_out),
+    .logic_flag(logic_flag),
+    .cmp_out(cmp_out),
+    .cmp_flag(cmp_flag),
+    .shift_out(shift_out),
+    .shift_flag(shift_flag)
+);
+
+// Clock Generation (100 kHz)
+always begin
+    clk_TB = 0; #4000;
+    clk_TB = 1; #6000;
+end
+
+initial begin
+    $dumpfile("ALU_S.vcd");  
+    $dumpvars;
+
+    A_TB = 0;
+    B_TB = 0;
+    ALU_FUN_TB = 4'b0000;
+    reset_TB = 0;
+    #100;
+    reset_TB = 1;
+
+    $display("Start Simulation");
+
+    // Addition Tests
+    A_TB = -4; B_TB = -5; ALU_FUN_TB = 4'b0000; #10000;
+    $display("Addition Test 1: %s", (arith_out == -9 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 8; B_TB = -3; #10000;
+    $display("Addition Test 2: %s", (arith_out == 5 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = -7; B_TB = 2; #10000;
+    $display("Addition Test 3: %s", (arith_out == -5 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 5; B_TB = 4; #10000;
+    $display("Addition Test 4: %s", (arith_out == 9 && arith_flag) ? "PASSED" : "FAILED");
+
+    // Subtraction Tests
+    ALU_FUN_TB = 4'b0001;
+    A_TB = -4; B_TB = -5; #10000;
+    $display("Subtraction Test 1: %s", (arith_out == 1 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 8; B_TB = -3; #10000;
+    $display("Subtraction Test 2: %s", (arith_out == 11 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = -7; B_TB = 2; #10000;
+    $display("Subtraction Test 3: %s", (arith_out == -9 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 5; B_TB = 4; #10000;
+    $display("Subtraction Test 4: %s", (arith_out == 1 && arith_flag) ? "PASSED" : "FAILED");
+
+    // Multiplication Tests
+    ALU_FUN_TB = 4'b0010;
+    A_TB = -4; B_TB = -2; #10000;
+    $display("Multiplication Test 1: %s", (arith_out == 8 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 6; B_TB = -2; #10000;
+    $display("Multiplication Test 2: %s", (arith_out == -12 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = -3; B_TB = 5; #10000;
+    $display("Multiplication Test 3: %s", (arith_out == -15 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 3; B_TB = 5; #10000;
+    $display("Multiplication Test 4: %s", (arith_out == 15 && arith_flag) ? "PASSED" : "FAILED");
+
+    // Division Tests
+    ALU_FUN_TB = 4'b0011;
+    A_TB = -8; B_TB = -2; #10000;
+    $display("Division Test 1: %s", (arith_out == 4 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 6; B_TB = -2; #10000;
+    $display("Division Test 2: %s", (arith_out == -3 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = -8; B_TB = 2; #10000;
+    $display("Division Test 3: %s", (arith_out == -4 && arith_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 8; B_TB = 2; #10000;
+    $display("Division Test 4: %s", (arith_out == 4 && arith_flag) ? "PASSED" : "FAILED");
+
+    // Logic Tests
+    A_TB = 16'h0290; B_TB = 16'h0A0F; ALU_FUN_TB = 4'b0100; #10000;
+    $display("AND Test: %s", (logic_out == (16'h0290 & 16'h0A0F) && logic_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b0101; #10000;
+    $display("OR Test: %s", (logic_out == (16'h0290 | 16'h0A0F) && logic_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b0110; #10000;
+    $display("NAND Test: %s", (logic_out == ~(16'h0290 & 16'h0A0F) && logic_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b0111; #10000;
+    $display("NOR Test: %s", (logic_out == ~(16'h0290 | 16'h0A0F) && logic_flag) ? "PASSED" : "FAILED");
+
+    // Comparison Tests
+    A_TB = 10; B_TB = 10; ALU_FUN_TB = 4'b1001; #10000;
+    $display("Compare Equal: %s", (cmp_out == 1 && cmp_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 20; B_TB = 10; ALU_FUN_TB = 4'b1010; #10000;
+    $display("Compare Greater: %s", (cmp_out == 2 && cmp_flag) ? "PASSED" : "FAILED");
+
+    A_TB = 5; B_TB = 15; ALU_FUN_TB = 4'b1011; #10000;
+    $display("Compare Less: %s", (cmp_out == 3 && cmp_flag) ? "PASSED" : "FAILED");
+
+    // Shift Tests
+    A_TB = 16'h00F0; B_TB = 16'h0F00; ALU_FUN_TB = 4'b1100; #10000;
+    $display("Shift A >> 1: %s", (shift_out == (16'h00F0 >> 1) && shift_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b1101; #10000;
+    $display("Shift A << 1: %s", (shift_out == (16'h00F0 << 1) && shift_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b1110; #10000;
+    $display("Shift B >> 1: %s", (shift_out == (16'h0F00 >> 1) && shift_flag) ? "PASSED" : "FAILED");
+
+    ALU_FUN_TB = 4'b1111; #10000;
+    $display("Shift B << 1: %s", (shift_out == (16'h0F00 << 1) && shift_flag) ? "PASSED" : "FAILED");
+
+    // No Operation
+    ALU_FUN_TB = 4'b1000; #10000;
+    $display("No Operation Test: %s", (cmp_flag && cmp_out == 0 && !arith_flag && !logic_flag && !shift_flag) ? "PASSED" : "FAILED");
+
+    $stop;
+end
+
+endmodule
